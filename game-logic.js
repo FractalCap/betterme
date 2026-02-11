@@ -1,6 +1,10 @@
 // Configuración y Estado
-const STATE_KEY = 'betterMeState';
-const ONE_HOUR_MS = 60 * 60 * 1000; // 3600000 ms
+const STATE_KEY = 'betterMeState_v2'; // Cambiamos key para resetear todo
+const ONE_HOUR_MS = 30 * 60 * 1000; // 30 minutos
+
+// Sonido de Alarma
+const alarmSound = new Audio('https://actions.google.com/sounds/v1/alarms/beep_short.ogg');
+alarmSound.loop = true;
 
 let state = {
     level: 1,
@@ -168,11 +172,22 @@ function updateTimer() {
         timeLeftDisplay.textContent = "¡AHORA!";
         timeLeftDisplay.style.color = "red";
         
+        // Activar alarma si no está sonando y estamos en tiempo cumplido
+        if (alarmSound.paused) {
+            alarmSound.play().catch(e => console.log("Interacción requerida para audio"));
+        }
+
         // Si estamos en la vista principal y pasa la hora, forzar chequeo
         if (modalPending.classList.contains('hidden')) {
             checkPendingUpdates();
         }
     } else {
+        // Detener alarma si ya no es tiempo (ej. se actualizó en otra pestaña)
+        if (!alarmSound.paused) {
+            alarmSound.pause();
+            alarmSound.currentTime = 0;
+        }
+
         // Formato MM:SS o HH:MM:SS
         const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
         const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
@@ -259,6 +274,10 @@ btnSubmitPending.addEventListener('click', () => {
         // Ajustar lastUpdate al tiempo actual para reiniciar el ciclo limpio
         state.lastUpdate = Date.now(); 
         
+        // Detener alarma
+        alarmSound.pause();
+        alarmSound.currentTime = 0;
+
         saveState();
         hidePendingModal();
     }
@@ -287,6 +306,10 @@ btnUpdate.addEventListener('click', () => {
     
     // Resetear Timer
     state.lastUpdate = Date.now();
+    
+    // Detener alarma
+    alarmSound.pause();
+    alarmSound.currentTime = 0;
     
     // Limpiar
     Object.values(inputs).forEach(input => input.value = '');
