@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Better Me - 8-Bit Tracker</title>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div class="game-container">
+        <header>
+            <h1 class="pixel-text">BETTER ME</h1>
+            <div class="level-box">
+                <span class="pixel-text">NIVEL:</span>
+                <span id="level-display" class="pixel-text level-num">1</span>
+            </div>
+            <div id="timer-status" class="pixel-text small-text">Próxima actualización: <span id="time-left">00:00</span></div>
+        </header>
+
+        <main id="main-content">
+            <!-- Las secciones de input se generarán dinámicamente o se mostrarán aquí -->
+            <div class="category-grid">
+                <!-- Salud -->
+                <div class="pixel-card">
+                    <h2 class="pixel-text">SALUD ❤️</h2>
+                    <ul class="pixel-list">
+                        <li>Comer bien, saludable, solo en casa.</li>
+                        <li>0 comidas en calle, nada de panadería.</li>
+                        <li>Nada de grasa, nada de gaseosas.</li>
+                        <li>Solo agua, ejercicio y detox de café.</li>
+                    </ul>
+                    <textarea id="input-salud" placeholder="Reporte: ¿Qué comiste? ¿Hiciste ejercicio?"></textarea>
+                </div>
+
+                <!-- Enfoque -->
+                <div class="pixel-card">
+                    <h2 class="pixel-text">ENFOQUE 🧠</h2>
+                    <ul class="pixel-list">
+                        <li>Escuchar solo motivación y crypto.</li>
+                        <li>Twitter main red social, no música.</li>
+                        <li>Ejercicios explosivos hasta el fallo.</li>
+                        <li>Tutoriales edición/automatizaciones.</li>
+                    </ul>
+                    <textarea id="input-enfoque" placeholder="Reporte: ¿En qué te enfocaste?"></textarea>
+                </div>
+
+                <!-- Ingreso -->
+                <div class="pixel-card">
+                    <h2 class="pixel-text">INGRESO 💰</h2>
+                    <ul class="pixel-list">
+                        <li>No gastar dinero, solo inversiones.</li>
+                        <li>Nada de salidas, ni dopamina barata.</li>
+                        <li>No azúcar, no comida rápida.</li>
+                        <li>Todo casero en casa.</li>
+                    </ul>
+                    <textarea id="input-ingreso" placeholder="Reporte: $$ Generado | $$ Invertido"></textarea>
+                </div>
+
+                <!-- Buen Control -->
+                <div class="pixel-card">
+                    <h2 class="pixel-text">CONTROL 🎮</h2>
+                    <ul class="pixel-list">
+                        <li>No fumar seguido (Pomodoro progresivo).</li>
+                        <li>NO reiniciar pomodoro, continuar.</li>
+                        <li>Respetar 100% management.</li>
+                        <li>0 excepciones o reinicio de nivel.</li>
+                    </ul>
+                    <textarea id="input-control" placeholder="Sinceridad: ¿Fumaste? ¿Respetaste el plan?"></textarea>
+                </div>
+            </div>
+
+            <button id="btn-update" class="pixel-btn">ACTUALIZAR (+1 NIVEL)</button>
+            
+            <div style="margin-top: 20px;">
+                <button id="btn-reset" class="pixel-btn pixel-btn-danger">¡FALLÉ! REINICIAR NIVEL 💀</button>
+            </div>
+
+            <!-- Sección de Historial -->
+            <div class="log-section">
+                <h2 class="pixel-text section-title">HISTORIAL DE REGISTROS 📜</h2>
+                <div class="table-container">
+                    <table class="pixel-table">
+                        <thead>
+                            <tr>
+                                <th>FECHA/HORA</th>
+                                <th>TIPO</th>
+                                <th>SALUD</th>
+                                <th>ENFOQUE</th>
+                                <th>INGRESO</th>
+                                <th>CONTROL</th>
+                            </tr>
+                        </thead>
+                        <tbody id="log-table-body">
+                            <!-- Los registros se llenarán aquí -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+
+        <!-- Modal para actualizaciones pendientes -->
+        <div id="modal-pending" class="modal hidden">
+            <div class="modal-content pixel-card">
+                <h2 class="pixel-text alert">¡ATENCIÓN!</h2>
+                <p class="pixel-text">Tienes actualizaciones pendientes.</p>
+                <p class="pixel-text">Debes recuperar el tiempo perdido.</p>
+                <p class="pixel-text">Pendientes: <span id="pending-count">0</span></p>
+                
+                <div id="pending-form-container">
+                    <!-- Aquí se inyectará el formulario dinámico para ponerse al día -->
+                    <h3 id="pending-label" class="pixel-text current-pending-label">Cargando...</h3>
+                    
+                    <div class="mini-form">
+                        <label>Salud:</label> <input type="text" id="pending-salud">
+                        <label>Enfoque:</label> <input type="text" id="pending-enfoque">
+                        <label>Ingreso:</label> <input type="text" id="pending-ingreso">
+                        <label>Control:</label> <input type="text" id="pending-control">
+                    </div>
+                    
+                    <button id="btn-submit-pending" class="pixel-btn">ENVIAR REPORTE</button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script src="game-logic.js"></script>
+</body>
+</html>
