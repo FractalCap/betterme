@@ -14,8 +14,17 @@
             <h1 class="pixel-text">BETTER ME</h1>
             <div class="level-box">
                 <span class="pixel-text">NIVEL:</span>
-                <span id="level-display" class="pixel-text level-num">1</span>
+                <span id="level-display" class="pixel-text level-num">0</span>
             </div>
+            
+            <div class="progress-container-outer">
+                <div class="pixel-text" style="font-size: 10px; margin-bottom: 5px;">PROGRESO (META: LVL 1000)</div>
+                <div class="progress-bar-bg">
+                    <div id="main-progress-bar" class="progress-bar-fill" style="width: 0%;"></div>
+                </div>
+                <div id="progress-text" class="pixel-text" style="font-size: 10px; text-align: right; margin-top: 5px;">0%</div>
+            </div>
+
             <div id="timer-status" class="pixel-text small-text">Próxima actualización: <span id="time-left">00:00</span></div>
         </header>
 
@@ -25,49 +34,73 @@
                 <!-- Salud -->
                 <div class="pixel-card">
                     <h2 class="pixel-text">SALUD ❤️</h2>
-                    <ul class="pixel-list">
+                    <ul class="pixel-list" id="desc-salud">
                         <li>Comer bien, saludable, solo en casa.</li>
                         <li>0 comidas en calle, nada de panadería.</li>
                         <li>Nada de grasa, nada de gaseosas.</li>
                         <li>Solo agua, ejercicio y detox de café.</li>
                     </ul>
-                    <textarea id="input-salud" placeholder="Reporte: ¿Qué comiste? ¿Hiciste ejercicio?"></textarea>
+                    <div class="input-check-group">
+                        <label class="pixel-text">¿CUMPLIDO?</label>
+                        <div class="radio-group">
+                            <label><input type="radio" name="salud" value="si"> SÍ ✅</label>
+                            <label><input type="radio" name="salud" value="no"> NO ❌</label>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Enfoque -->
                 <div class="pixel-card">
                     <h2 class="pixel-text">ENFOQUE 🧠</h2>
-                    <ul class="pixel-list">
+                    <ul class="pixel-list" id="desc-enfoque">
                         <li>Escuchar solo motivación y crypto.</li>
                         <li>Twitter main red social, no música.</li>
                         <li>Ejercicios explosivos hasta el fallo.</li>
                         <li>Tutoriales edición/automatizaciones.</li>
                     </ul>
-                    <textarea id="input-enfoque" placeholder="Reporte: ¿En qué te enfocaste?"></textarea>
+                    <div class="input-check-group">
+                        <label class="pixel-text">¿CUMPLIDO?</label>
+                        <div class="radio-group">
+                            <label><input type="radio" name="enfoque" value="si"> SÍ ✅</label>
+                            <label><input type="radio" name="enfoque" value="no"> NO ❌</label>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Ingreso -->
                 <div class="pixel-card">
                     <h2 class="pixel-text">INGRESO 💰</h2>
-                    <ul class="pixel-list">
+                    <ul class="pixel-list" id="desc-ingreso">
                         <li>No gastar dinero, solo inversiones.</li>
                         <li>Nada de salidas, ni dopamina barata.</li>
                         <li>No azúcar, no comida rápida.</li>
                         <li>Todo casero en casa.</li>
                     </ul>
-                    <textarea id="input-ingreso" placeholder="Reporte: $$ Generado | $$ Invertido"></textarea>
+                    <div class="input-check-group">
+                        <label class="pixel-text">¿CUMPLIDO?</label>
+                        <div class="radio-group">
+                            <label><input type="radio" name="ingreso" value="si"> SÍ ✅</label>
+                            <label><input type="radio" name="ingreso" value="no"> NO ❌</label>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Buen Control -->
                 <div class="pixel-card">
                     <h2 class="pixel-text">CONTROL 🎮</h2>
-                    <ul class="pixel-list">
+                    <ul class="pixel-list" id="desc-control">
                         <li>No fumar seguido (Pomodoro progresivo).</li>
                         <li>NO reiniciar pomodoro, continuar.</li>
                         <li>Respetar 100% management.</li>
                         <li>0 excepciones o reinicio de nivel.</li>
                     </ul>
-                    <textarea id="input-control" placeholder="Sinceridad: ¿Fumaste? ¿Respetaste el plan?"></textarea>
+                    <div class="input-check-group">
+                        <label class="pixel-text">¿CUMPLIDO?</label>
+                        <div class="radio-group">
+                            <label><input type="radio" name="control" value="si"> SÍ ✅</label>
+                            <label><input type="radio" name="control" value="no"> NO ❌</label>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -112,11 +145,66 @@
                     <!-- Aquí se inyectará el formulario dinámico para ponerse al día -->
                     <h3 id="pending-label" class="pixel-text current-pending-label">Cargando...</h3>
                     
-                    <div class="mini-form">
-                        <label>Salud:</label> <input type="text" id="pending-salud">
-                        <label>Enfoque:</label> <input type="text" id="pending-enfoque">
-                        <label>Ingreso:</label> <input type="text" id="pending-ingreso">
-                        <label>Control:</label> <input type="text" id="pending-control">
+                    <div class="pending-grid">
+                        <!-- Salud -->
+                        <div class="pending-card">
+                            <h4 class="pixel-text">SALUD ❤️</h4>
+                            <ul class="pixel-list small-list">
+                                <li>Comer bien, saludable, solo en casa.</li>
+                                <li>0 comidas en calle, nada de panadería.</li>
+                                <li>Nada de grasa, nada de gaseosas.</li>
+                                <li>Solo agua, ejercicio y detox de café.</li>
+                            </ul>
+                            <div class="radio-group-pending">
+                                <label><input type="radio" name="pending-salud" value="si"> SÍ</label>
+                                <label><input type="radio" name="pending-salud" value="no"> NO</label>
+                            </div>
+                        </div>
+
+                        <!-- Enfoque -->
+                        <div class="pending-card">
+                            <h4 class="pixel-text">ENFOQUE 🧠</h4>
+                            <ul class="pixel-list small-list">
+                                <li>Escuchar solo motivación y crypto.</li>
+                                <li>Twitter main red social, no música.</li>
+                                <li>Ejercicios explosivos hasta el fallo.</li>
+                                <li>Tutoriales edición/automatizaciones.</li>
+                            </ul>
+                            <div class="radio-group-pending">
+                                <label><input type="radio" name="pending-enfoque" value="si"> SÍ</label>
+                                <label><input type="radio" name="pending-enfoque" value="no"> NO</label>
+                            </div>
+                        </div>
+
+                        <!-- Ingreso -->
+                        <div class="pending-card">
+                            <h4 class="pixel-text">INGRESO 💰</h4>
+                            <ul class="pixel-list small-list">
+                                <li>No gastar dinero, solo inversiones.</li>
+                                <li>Nada de salidas, ni dopamina barata.</li>
+                                <li>No azúcar, no comida rápida.</li>
+                                <li>Todo casero en casa.</li>
+                            </ul>
+                            <div class="radio-group-pending">
+                                <label><input type="radio" name="pending-ingreso" value="si"> SÍ</label>
+                                <label><input type="radio" name="pending-ingreso" value="no"> NO</label>
+                            </div>
+                        </div>
+
+                        <!-- Control -->
+                        <div class="pending-card">
+                            <h4 class="pixel-text">CONTROL 🎮</h4>
+                            <ul class="pixel-list small-list">
+                                <li>No fumar seguido (Pomodoro progresivo).</li>
+                                <li>NO reiniciar pomodoro, continuar.</li>
+                                <li>Respetar 100% management.</li>
+                                <li>0 excepciones o reinicio de nivel.</li>
+                            </ul>
+                            <div class="radio-group-pending">
+                                <label><input type="radio" name="pending-control" value="si"> SÍ</label>
+                                <label><input type="radio" name="pending-control" value="no"> NO</label>
+                            </div>
+                        </div>
                     </div>
                     
                     <button id="btn-submit-pending" class="pixel-btn">ENVIAR REPORTE</button>

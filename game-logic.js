@@ -1,13 +1,14 @@
 // Configuración y Estado
-const STATE_KEY = 'betterMeState_v2'; // Cambiamos key para resetear todo
-const ONE_HOUR_MS = 30 * 60 * 1000; // 30 minutos
+const STATE_KEY = 'betterMeState_v4'; // Update version
+const UPDATE_INTERVAL_MS = 30 * 60 * 1000; // 30 Minutos
+// const UPDATE_INTERVAL_MS = 10 * 1000; // Debug
 
 // Sonido de Alarma
 const alarmSound = new Audio('https://actions.google.com/sounds/v1/alarms/beep_short.ogg');
 alarmSound.loop = true;
 
 let state = {
-    level: 1,
+    level: 0,
     lastUpdate: Date.now(),
     logs: []
 };
@@ -15,12 +16,9 @@ let state = {
 // Elementos del DOM
 const levelDisplay = document.getElementById('level-display');
 const timeLeftDisplay = document.getElementById('time-left');
-const inputs = {
-    salud: document.getElementById('input-salud'),
-    enfoque: document.getElementById('input-enfoque'),
-    ingreso: document.getElementById('input-ingreso'),
-    control: document.getElementById('input-control')
-};
+const progressBar = document.getElementById('main-progress-bar');
+const progressText = document.getElementById('progress-text');
+
 const btnUpdate = document.getElementById('btn-update');
 const btnReset = document.getElementById('btn-reset');
 
@@ -28,20 +26,16 @@ const modalPending = document.getElementById('modal-pending');
 const pendingCountSpan = document.getElementById('pending-count');
 const pendingLabel = document.getElementById('pending-label');
 const btnSubmitPending = document.getElementById('btn-submit-pending');
-const pendingInputs = {
-    salud: document.getElementById('pending-salud'),
-    enfoque: document.getElementById('pending-enfoque'),
-    ingreso: document.getElementById('pending-ingreso'),
-    control: document.getElementById('pending-control')
-};
 const logTableBody = document.getElementById('log-table-body');
+
+const CATEGORIES = ['salud', 'enfoque', 'ingreso', 'control'];
 
 // Inicialización
 function init() {
     loadState();
     checkPendingUpdates();
-    renderLogs(); // Renderizar tabla al inicio
-    setInterval(updateTimer, 1000); // Actualizar contador cada segundo
+    renderLogs();
+    setInterval(updateTimer, 1000);
     updateUI();
 }
 
@@ -58,11 +52,11 @@ function loadState() {
     const saved = localStorage.getItem(STATE_KEY);
     if (saved) {
         state = JSON.parse(saved);
-        // Asegurar que logs existe si venimos de una versión vieja (aunque es nuevo)
         if (!state.logs) state.logs = [];
+        if (state.level === undefined) state.level = 0;
     } else {
-        // Primera vez
         state.lastUpdate = Date.now();
+        state.level = 0;
         saveState();
     }
 }
@@ -70,12 +64,11 @@ function loadState() {
 function saveState() {
     localStorage.setItem(STATE_KEY, JSON.stringify(state));
     updateUI();
-    renderLogs(); // Re-renderizar tabla al guardar
+    renderLogs();
 }
 
 function renderLogs() {
     logTableBody.innerHTML = '';
-    // Ordenar logs por fecha descendente (más nuevo primero)
     const sortedLogs = [...state.logs].sort((a, b) => b.timestamp - a.timestamp);
 
     sortedLogs.forEach(log => {
@@ -94,67 +87,55 @@ function renderLogs() {
             typeClass = 'tag-recovery';
             typeLabel = 'RECUPERACIÓN';
         } else if (log.type === 'reset') {
-            typeClass = 'tag-recovery'; // Usamos rojo para reset también
+            typeClass = 'tag-recovery';
             typeLabel = '💀 REINICIO';
         }
 
         tr.innerHTML = `
             <td>${formattedDate}</td>
             <td class="${typeClass}">${typeLabel}</td>
-            <td>${log.data.salud || '-'}</td>
-            <td>${log.data.enfoque || '-'}</td>
-            <td>${log.data.ingreso || '-'}</td>
-            <td>${log.data.control || '-'}</td>
+            <td>${formatLogData(log.data.salud)}</td>
+            <td>${formatLogData(log.data.enfoque)}</td>
+            <td>${formatLogData(log.data.ingreso)}</td>
+            <td>${formatLogData(log.data.control)}</td>
         `;
         logTableBody.appendChild(tr);
     });
 }
 
+function formatLogData(val) {
+    if (!val) return '-';
+    if (val === 'si') return '✅ SÍ';
+    if (val === 'no') return '❌ NO';
+    return val;
+}
+
 function updateUI() {
+    // Actualizar Nivel
     levelDisplay.textContent = state.level;
-    // Cambiar color del nivel según altura
-    if (state.level > 10) levelDisplay.style.color = '#00ff00'; // Verde
-    if (state.level > 20) levelDisplay.style.color = '#ff00ff'; // Magenta
+    
+    // Calcular porcentaje (0 a 1000)
+    const maxLevel = 1000;
+    let percentage = (state.level / maxLevel) * 100;
+    if (percentage > 100) percentage = 100;
+    
+    progressBar.style.width = `${percentage}%`;
+    progressText.textContent = `${percentage.toFixed(1)}% (Lvl ${state.level}/${maxLevel})`;
+
+    // Colores
+    if (state.level > 100) levelDisplay.style.color = '#00ff00';
+    if (state.level > 500) levelDisplay.style.color = '#ff00ff';
 }
 
 // Lógica de Tiempo y Actualizaciones Pendientes
-let pendingHours = 0;
+let pendingIntervals = 0;
 
 function checkPendingUpdates() {
     const now = Date.now();
     const diff = now - state.lastUpdate;
-    
-    // Cuántas horas han pasado (completas)
-    pendingHours = Math.floor(diff / ONE_HOUR_MS);
+    pendingIntervals = Math.floor(diff / UPDATE_INTERVAL_MS);
 
-    if (pendingHours > 0) {
-        // Penalización: Perder niveles por cada hora perdida
-        const penalty = pendingHours;
-        if (penalty > 0) {
-             // Solo penalizar si no se ha penalizado ya (esto es un poco tricky sin guardar timestamp de última penalización)
-             // Simplificación: Asumimos que lastUpdate es la última vez que interactuó.
-             // Si pasaron horas, bajamos niveles ahora mismo.
-             // Pero cuidado: si recarga la página, no queremos penalizar doble.
-             // El lastUpdate NO cambia hasta que resuelve.
-             // Así que necesitamos un flag o calcular basado en tiempo real.
-             
-             // Mejor enfoque: 
-             // El nivel se "recalcula" o se penaliza visualmente.
-             // Pero para ser persistente: 
-             // Restamos los niveles y MOVIEMOS lastUpdate para que no siga penalizando por EL MISMO periodo?
-             // No, lastUpdate debe moverse solo cuando se rellena el reporte.
-             
-             // Solución: No cambiar el nivel en BD automáticamente para evitar loops de penalización al refrescar.
-             // Hacerlo en el momento de procesar el pago de la deuda?
-             // O simplemente alertar "Has perdido X niveles por inactividad".
-             
-             // Vamos a hacerlo simple y directo como pidió:
-             // "si no se actualiza se quita un nivel"
-             // Lo aplicaremos visualmente y al guardar.
-             // Para evitar doble penalización al refresh, podríamos guardar "lastPenaltyCheck".
-             // Pero por ahora, vamos a confiar en que el usuario rellenará el modal.
-        }
-        
+    if (pendingIntervals > 0) {
         showPendingModal();
     } else {
         hidePendingModal();
@@ -164,31 +145,26 @@ function checkPendingUpdates() {
 function updateTimer() {
     const now = Date.now();
     const diff = now - state.lastUpdate;
-    const nextUpdate = state.lastUpdate + ONE_HOUR_MS;
+    const nextUpdate = state.lastUpdate + UPDATE_INTERVAL_MS;
     const timeLeft = nextUpdate - now;
 
     if (timeLeft <= 0) {
-        // Se cumplió la hora
         timeLeftDisplay.textContent = "¡AHORA!";
         timeLeftDisplay.style.color = "red";
         
-        // Activar alarma si no está sonando y estamos en tiempo cumplido
         if (alarmSound.paused) {
             alarmSound.play().catch(e => console.log("Interacción requerida para audio"));
         }
 
-        // Si estamos en la vista principal y pasa la hora, forzar chequeo
         if (modalPending.classList.contains('hidden')) {
             checkPendingUpdates();
         }
     } else {
-        // Detener alarma si ya no es tiempo (ej. se actualizó en otra pestaña)
         if (!alarmSound.paused) {
             alarmSound.pause();
             alarmSound.currentTime = 0;
         }
 
-        // Formato MM:SS o HH:MM:SS
         const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
         const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
         timeLeftDisplay.textContent = `${pad(minutes)}:${pad(seconds)}`;
@@ -211,151 +187,133 @@ function hidePendingModal() {
 }
 
 function updatePendingUI() {
-    pendingCountSpan.textContent = pendingHours;
+    pendingCountSpan.textContent = pendingIntervals;
     
-    // Calcular la hora exacta que estamos recuperando
-    // lastUpdate es el último momento registrado. El siguiente reporte corresponde a lastUpdate + 1 hora.
-    const recoveredTime = new Date(state.lastUpdate + ONE_HOUR_MS);
+    const recoveredTime = new Date(state.lastUpdate + UPDATE_INTERVAL_MS);
     const timeString = recoveredTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     
-    pendingLabel.textContent = `Reporte de hace ${pendingHours} horas (${timeString})`;
+    pendingLabel.textContent = `Pendiente: ${timeString}`;
     
-    // Limpiar inputs pendientes
-    Object.values(pendingInputs).forEach(input => input.value = '');
-    
-    // Focus en el primer input
-    pendingInputs.salud.focus();
+    // Limpiar radios pendientes
+    CATEGORIES.forEach(cat => {
+        const radios = document.getElementsByName(`pending-${cat}`);
+        radios.forEach(r => r.checked = false);
+    });
+}
+
+// Helper para obtener valor de radio buttons
+function getRadioValue(name) {
+    const checked = document.querySelector(`input[name="${name}"]:checked`);
+    return checked ? checked.value : null;
+}
+
+// Helper para validar radio buttons
+function validateRadios(prefix = '') {
+    return CATEGORIES.every(cat => {
+        const val = getRadioValue(`${prefix}${cat}`);
+        return val !== null;
+    });
+}
+
+function getRadioValues(prefix = '') {
+    const data = {};
+    CATEGORIES.forEach(cat => {
+        data[cat] = getRadioValue(`${prefix}${cat}`);
+    });
+    return data;
 }
 
 // Enviar reporte pendiente
 btnSubmitPending.addEventListener('click', () => {
-    // Validar
-    if (!validateInputs(pendingInputs)) {
-        alert("¡Debes llenar todos los campos! Cero excusas.");
+    if (!validateRadios('pending-')) {
+        alert("¡Debes responder SÍ o NO en todas las categorías!");
         return;
     }
 
-    // Calcular la fecha correcta para este log (la hora que estamos recuperando)
-    const logTimestamp = state.lastUpdate + ONE_HOUR_MS;
+    const logTimestamp = state.lastUpdate + UPDATE_INTERVAL_MS;
+    const values = getRadioValues('pending-');
 
-    // Guardar log
+    // Check failure
+    const hasFailure = Object.values(values).includes('no');
+
     const log = {
         type: 'recovery',
-        timestamp: logTimestamp, // Usar la hora recuperada, no la actual
-        data: getInputValues(pendingInputs)
+        timestamp: logTimestamp,
+        data: values
     };
     state.logs.push(log);
 
-    // Lógica de Niveles y Tiempo
-    // Recuperamos 1 hora.
-    // El usuario "paga" una hora pendiente.
-    // Sumamos nivel por cumplir (aunque sea tarde, cumple la acción de actualizar)
-    // OJO: El usuario pidió "si no se actualiza se quita un nivel".
-    // Al haber pasado la hora, técnicamente perdió el nivel. Al actualizar, lo recupera.
-    // Así que +1 nivel.
+    // Update Logic
+    state.lastUpdate += UPDATE_INTERVAL_MS;
+    pendingIntervals--;
     
-    // Ajustamos lastUpdate sumando 1 hora para reducir la brecha
-    state.lastUpdate += ONE_HOUR_MS;
-    
-    // Recalcular pendientes
-    pendingHours--;
+    state.level++;
 
-    if (pendingHours > 0) {
-        // Eliminamos el alert para hacerlo más fluido
-        // alert("¡Bien! Siguiente reporte pendiente...");
-        
-        // Actualizamos UI para que muestre el siguiente número
+    if (pendingIntervals > 0) {
         updatePendingUI();
-        saveState(); // Guardar cada reporte individualmente
+        saveState();
     } else {
-        // alert("¡Estás al día! Has recuperado el control.");
-        state.level++; // Subir nivel por completar la tarea
-        
-        // Ajustar lastUpdate al tiempo actual para reiniciar el ciclo limpio
-        state.lastUpdate = Date.now(); 
-        
-        // Detener alarma
+        state.lastUpdate = Date.now();
         alarmSound.pause();
         alarmSound.currentTime = 0;
-
         saveState();
         hidePendingModal();
     }
 });
 
-// Actualización Normal (Botón Principal)
+// Actualización Normal
 btnUpdate.addEventListener('click', () => {
-    // Verificar si es tiempo (o si quiere actualizar antes, permitimos? 
-    // "recordatorio obligatorio cada hora". 
-    // Si actualiza antes, reinicia el timer? Sí, para mantener el flujo constante.)
-    
-    if (!validateInputs(inputs)) {
-        alert("¡Rellena todo! Sé sincero y completo.");
+    if (!validateRadios('')) {
+        alert("¡Responde todas las preguntas! SÍ o NO.");
         return;
     }
 
+    const values = getRadioValues('');
+    
     const log = {
         type: 'regular',
         timestamp: Date.now(),
-        data: getInputValues(inputs)
+        data: values
     };
     state.logs.push(log);
 
-    // Subir Nivel
     state.level++;
-    
-    // Resetear Timer
     state.lastUpdate = Date.now();
     
-    // Detener alarma
     alarmSound.pause();
     alarmSound.currentTime = 0;
     
-    // Limpiar
-    Object.values(inputs).forEach(input => input.value = '');
+    // Clear inputs
+    CATEGORIES.forEach(cat => {
+        const radios = document.getElementsByName(cat);
+        radios.forEach(r => r.checked = false);
+    });
 
     saveState();
-    alert(`¡Actualizado! Nivel ${state.level}. Sigue así.`);
+    alert(`¡Actualizado! Nivel ${state.level}.`);
 });
 
 // Reinicio de Nivel
 btnReset.addEventListener('click', () => {
-    if (!confirm("¿Seguro que quieres reiniciar? Perderás todo tu nivel actual.")) return;
+    if (!confirm("¿Seguro que quieres reiniciar? Volverás a Nivel 0.")) return;
     
-    // Guardar log de la derrota
     const log = {
         type: 'reset',
         timestamp: Date.now(),
         data: {
-            salud: 'FALLO',
-            enfoque: 'FALLO',
-            ingreso: 'FALLO',
-            control: 'REINICIO DE NIVEL'
+            salud: 'REINICIO',
+            enfoque: 'REINICIO',
+            ingreso: 'REINICIO',
+            control: 'REINICIO'
         }
     };
     state.logs.push(log);
     
-    // Resetear nivel
-    state.level = 1;
-    state.lastUpdate = Date.now(); // Reiniciar timer
+    state.level = 0;
+    state.lastUpdate = Date.now();
     
     saveState();
-    alert("Nivel reiniciado. ¡A empezar de nuevo con más fuerza!");
+    alert("Nivel reiniciado a 0.");
 });
 
-// Helpers
-function validateInputs(inputObj) {
-    return Object.values(inputObj).every(input => input.value.trim().length > 0);
-}
-
-function getInputValues(inputObj) {
-    return {
-        salud: inputObj.salud.value,
-        enfoque: inputObj.enfoque.value,
-        ingreso: inputObj.ingreso.value,
-        control: inputObj.control.value
-    };
-}
-
-// Arrancar
 init();
